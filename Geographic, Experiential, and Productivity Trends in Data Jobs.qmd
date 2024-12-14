@@ -1,0 +1,131 @@
+---
+title: "Geographic, Experiential, and Productivity Trends in Data Jobs"
+Author: "Nakonde Ronah Precious"
+---
+
+# About the datasets
+
+Here I have used two data sets from Kaggle.
+
+The first is about jobs in the field of data science that explores **9355 entries** and this data set has 12 columns;
+
+-   **work_year**: The year the data was recorded.
+
+```{=html}
+<!-- -->
+```
+-   **job_title**: Title of the job (e.g., Data Scientist, Data Architect).
+
+-   **job_category**: Broad job classification (e.g., Data Engineering, Data Science).
+
+-   **salary_currency**: Currency of the salary.
+
+-   **salary**: Salary in the specified currency.
+
+-   **salary_in_usd**: Standardized salary in USD.
+
+-   **employee_residence**: Country of residence of the employee.
+
+-   **experience_level**: Experience level (e.g., Entry-level, Mid-level, Senior).
+
+-   **employment_type**: Type of employment (e.g., Full-time, Contract).
+
+-   **work_setting**: Work environment (e.g., Hybrid, In-person, Remote).
+
+-   **company_location**: Location of the company.
+
+-   **company_size**: Size of the company (e.g., Small (S), Medium (M), Large (L)).
+
+    The second data set contains **1,000 entries** and 5 columns, focusing on employee work patterns and productivity;
+
+-   **Employee_ID**: A unique identifier for each employee.
+
+```{=html}
+<!-- -->
+```
+-   **Employment_Type**: Indicates if the employee works "Remote" or "In-Office."
+
+-   **Hours_Worked_Per_Week**: Average number of hours worked per week.
+
+-   **Productivity_Score**: A metric indicating productivity (e.g., performance or output).
+
+-   **Well_Being_Score**: A score reflecting employee well-being.
+
+    My motivation for exploring data sets on job trends in data arises from the recent wave of layoffs in the tech industry during 2023-2024. This situation has sparked a debate among major tech CEOs, who argue that remote work diminishes productivity and that the same level of
+    output can be achieved when employees are in the office. I aim to investigate whether this claim holds true by analyzing job trends in data science.
+
+    Additionally, I plan to explore how different countries are responding to these trends, particularly in
+    terms of the number of remote job opportunities they offer. By comparing these insights across the two data sets, I hope to uncover valuable information about the evolving landscape of work in the tech sector and the implications for remote employment.
+
+## Loading the data
+
+```{r echo=FALSE, results='hide', message=FALSE, warning=FALSE}
+library(tidyverse)
+productivity_data <- read_csv("/Users/ronahnakonde/Downloads/remote_work_productivity.csv") 
+
+jobs_data <- read_csv("/Users/ronahnakonde/Downloads/jobs_in_data.csv") 
+```
+
+## Bigger picture
+
+```{r echo=FALSE, results='hide', message=FALSE, warning=FALSE}
+# Summarize the data if needed (e.g., count occurrences)
+
+jobs_summary <- jobs_data |> 
+
+  group_by(work_setting, job_category) |> 
+
+  summarise(count = n()) 
+
+```
+
+```{r}
+# Faceted line plot for trends by job categories
+
+ggplot(jobs_summary, aes(x = count, y = work_setting, fill = work_setting)) +
+
+  geom_col() +
+
+  facet_wrap(~ ~ str_wrap(job_category, width = 10)) +
+  scale_fill_viridis(discrete = TRUE) +
+  labs(title = "Work Setting and Job Category", y = "Work Setting", x = "Count") +
+  theme(legend.position = "none")
+```
+
+```{r echo=FALSE, results='hide', message=FALSE, warning=FALSE}
+location_summary <- jobs_data |> 
+
+  group_by(company_location) |> 
+
+  summarise(count = n(), .groups = 'drop') |> 
+
+  arrange(desc(count))
+```
+
+```{r}
+# Get the top 10 countries by job count
+top_countries <- jobs_data |> 
+  group_by(company_location) |> 
+  summarise(count = n(), .groups = 'drop') |> 
+  arrange(desc(count)) |> 
+  slice(1:10) |> 
+  pull(company_location)
+
+# Filter the original data for these top countries
+filtered_data <- jobs_data |> 
+  filter(company_location %in% top_countries)
+```
+
+```{r}
+# Create the stacked bar plot
+ggplot(filtered_data, aes(x = company_location, fill = work_setting)) +
+  geom_bar(position = "fill") +  # Use "fill" to show proportions
+  scale_y_continuous(labels = scales::percent) +  # Convert y-axis to percentage
+  scale_fill_viridis(discrete = TRUE) +  # Use viridis color palette
+  labs(title = "Distribution of Work Settings in Top 10 Countries",
+       x = "Company Location",
+       y = "Proportion of Job Postings",
+       fill = "Work Setting") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
