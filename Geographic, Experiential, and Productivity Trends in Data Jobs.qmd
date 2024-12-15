@@ -36,7 +36,6 @@ productivity_data <- read_csv("/Users/ronahnakonde/Downloads/remote_work_product
 
 
 ```{r echo=FALSE, results='hide', message=FALSE, warning=FALSE}
-# Summarize the data if needed (e.g., count occurrences)
 library(gtExtras)
 jobs_summary <- jobs_data |> 
   count(job_category, work_setting, name = "count")
@@ -67,7 +66,7 @@ jobs_summary_table
 
 ```{r echo=FALSE, results='hide', message=FALSE, warning=FALSE}
 ggplot(jobs_summary1, aes(y = job_category, x = count, fill = work_setting)) +
-  geom_col(position = "fill") +  # Use "fill" for proportional stacking
+  geom_col(position = "fill") +  
   scale_x_continuous(labels = scales::percent) +  # Convert x-axis to percentage
   scale_fill_viridis(discrete = TRUE, option = "D") + 
   labs(x = NULL,
@@ -83,7 +82,6 @@ ggplot(jobs_summary1, aes(y = job_category, x = count, fill = work_setting)) +
 
 ```{r echo=FALSE, results='hide', message=FALSE, warning=FALSE}
 # Create the box plot with viridis color palette
-library(viridis)
 ggplot(jobs_data, aes(x = reorder(experience_level, -as.numeric(salary_in_usd)), y = as.numeric(salary_in_usd), fill = work_setting)) +
   geom_boxplot() +
   scale_fill_viridis(discrete = TRUE) +
@@ -112,9 +110,9 @@ filtered_data <- jobs_data |>
 proportions_usd_data <- filtered_data |> 
   group_by(company_location, work_setting) |> 
   summarise(
-    count = n(),                                   # Count of jobs
+    count = n(),                                   
     avg_salary = mean(salary_in_usd, na.rm = TRUE), # Average salary in USD
-    .groups = 'drop'                               # Drop grouping after summarizing
+    .groups = 'drop'                               
   ) |> 
   group_by(company_location) |> 
   mutate(
@@ -137,7 +135,7 @@ ggplot(proportions_usd_data, aes(x = company_location, y = work_setting, fill = 
 ```{r echo=FALSE, results='hide', message=FALSE, warning=FALSE}
 ggplot(productivity_data, aes(x = Productivity_Score, y = Hours_Worked_Per_Week, color = Employment_Type)) +
   geom_point(alpha = 0.7, size = 3) +  # Semi-transparent points for better readability
-  scale_color_viridis_d(option = "D") +  # Viridis discrete palette
+  scale_color_viridis_d(option = "D") +  
   labs(x = "Productivity Score",
     y = "Hours Worked Per Week",
     color = "Employment Type"
@@ -145,7 +143,7 @@ ggplot(productivity_data, aes(x = Productivity_Score, y = Hours_Worked_Per_Week,
   theme_minimal() +
   theme(
     axis.text.x = element_text(angle = 45, hjust = 1),
-    legend.position = "bottom"  # Place legend at the bottom for better aesthetics
+    legend.position = "bottom"  
   )
 ```
 
