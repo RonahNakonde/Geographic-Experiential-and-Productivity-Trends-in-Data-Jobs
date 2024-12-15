@@ -11,9 +11,6 @@ The first is about jobs in the field of data science that explores **9355 entrie
 
 -   **work_year**: The year the data was recorded.
 
-```{=html}
-<!-- -->
-```
 -   **job_title**: Title of the job (e.g., Data Scientist, Data Architect).
 
 -   **job_category**: Broad job classification (e.g., Data Engineering, Data Science).
@@ -40,9 +37,6 @@ The first is about jobs in the field of data science that explores **9355 entrie
 
 -   **Employee_ID**: A unique identifier for each employee.
 
-```{=html}
-<!-- -->
-```
 -   **Employment_Type**: Indicates if the employee works "Remote" or "In-Office."
 
 -   **Hours_Worked_Per_Week**: Average number of hours worked per week.
@@ -61,36 +55,61 @@ The first is about jobs in the field of data science that explores **9355 entrie
 
 ```{r echo=FALSE, results='hide', message=FALSE, warning=FALSE}
 library(tidyverse)
-productivity_data <- read_csv("/Users/ronahnakonde/Downloads/remote_work_productivity.csv") 
+library(ggplot2)
+library(scales)
+library(forcats)
+library(svglite)
 
 jobs_data <- read_csv("/Users/ronahnakonde/Downloads/jobs_in_data.csv") 
+productivity_data <- read_csv("/Users/ronahnakonde/Downloads/remote_work_productivity.csv") 
 ```
 
 ## Bigger picture
 
 ```{r echo=FALSE, results='hide', message=FALSE, warning=FALSE}
 # Summarize the data if needed (e.g., count occurrences)
-
+library(gtExtras)
 jobs_summary <- jobs_data |> 
-
-  group_by(work_setting, job_category) |> 
-
-  summarise(count = n()) 
-
+  count(job_category, work_setting, name = "count")
 ```
 
 ```{r}
-# Faceted line plot for trends by job categories
+jobs_summary1 <- jobs_summary |> 
+  group_by(job_category) |> 
+  mutate(total_count = sum(count)) |> 
+  ungroup() |> 
+  mutate(job_category = fct_reorder(job_category, total_count, .desc = TRUE))
+  
+  job_category_summary <- jobs_summary1 |> 
+    group_by(job_category) |> 
+    summarise(total_count = sum(count), .groups = "drop")
+  
+# Create the gt table 
+jobs_summary_table <- job_category_summary |> 
+  gt() |> 
+  gt_plt_bar(column = total_count, width = 70)
 
-ggplot(jobs_summary, aes(x = count, y = work_setting, fill = work_setting)) +
-
-  geom_col() +
-
-  facet_wrap(~ ~ str_wrap(job_category, width = 10)) +
-  scale_fill_viridis(discrete = TRUE) +
-  labs(title = "Work Setting and Job Category", y = "Work Setting", x = "Count") +
-  theme(legend.position = "none")
+jobs_summary_table
 ```
+
+```{r echo=FALSE, results='hide', message=FALSE, warning=FALSE}
+ggplot(jobs_summary1, aes(y = job_category, fill = work_setting)) +
+  geom_bar(position = "fill") +  # Use "fill" to show proportions
+  scale_x_continuous(labels = scales::percent) +  # Convert y-axis to percentage
+  labs(title = "Distribution of Work Settings Amongst Job Categories",
+       x = NULL, y = NULL,
+       fill = "Work Setting") +
+ theme_classic()
+  
+```
+
+
+```{r echo=FALSE, results='hide', message=FALSE, warning=FALSE}
+# Print column names
+rm(jobs_summary_wide)
+
+```
+
 
 ```{r echo=FALSE, results='hide', message=FALSE, warning=FALSE}
 location_summary <- jobs_data |> 
@@ -117,11 +136,23 @@ filtered_data <- jobs_data |>
 ```
 
 ```{r}
-# Create the stacked bar plot
-ggplot(filtered_data, aes(x = company_location, fill = work_setting)) +
-  geom_bar(position = "fill") +  # Use "fill" to show proportions
+# Load required libraries
+library(dplyr)
+library(ggplot2)
+library(scales)
+
+# Calculate the proportions of each work setting for each company location
+proportions_data <- filtered_data |> 
+  group_by(company_location, work_setting) |> 
+  summarise(count = n(), .groups = 'drop') |> 
+  group_by(company_location) |> 
+  mutate(proportion = count / sum(count))  # Calculate proportion
+
+# Create the stacked column graph with inverted y-axis
+ggplot(proportions_data, aes(x = company_location, y = proportion, fill = work_setting)) +
+  geom_col(position = "fill") +  # Use "fill" to show proportions
   scale_y_continuous(labels = scales::percent) +  # Convert y-axis to percentage
-  scale_fill_viridis(discrete = TRUE) +  # Use viridis color palette
+  scale_y_reverse() +  # Invert the y-axis
   labs(title = "Distribution of Work Settings in Top 10 Countries",
        x = "Company Location",
        y = "Proportion of Job Postings",
@@ -129,3 +160,16 @@ ggplot(filtered_data, aes(x = company_location, fill = work_setting)) +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
+```{r}
+# Create the box plot with viridis color palette
+library(viridis)
+ggplot(jobs_data, aes(x = reorder(experience_level, -as.numeric(salary_in_usd)), y = as.numeric(salary_in_usd), fill = work_setting)) +
+  geom_boxplot() +
+  scale_fill_viridis(discrete = TRUE) +
+  labs(title = "Salary Distribution by Experience level and Work Setting",
+       x = "Experience Level",
+       y = "Salary (USD)") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
